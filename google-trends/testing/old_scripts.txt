@@ -1,0 +1,35 @@
+def _process_weekly_values(self, weeks_period, items):
+        # Prepare variables
+        word_data = []
+        period = {'year': None, 'sum': 0, 'number': 1}
+        # Browse all rows
+        for index, item in enumerate(items):
+            # Check if an empty row was reached.
+            if not item.value:
+                break    # stop the loop
+            # Get values
+            #print item.value
+            result = self.reg_week.match(item.value.strip())
+            result_count = float(result.group(3))
+            result_year = int(result.group(1)[0:4])
+            # Check if the script should stop processing values.
+            if result_year > self.last_year:
+                break
+            # If not, continue.
+            period['sum'] = result_count + period['sum']
+            period['year'] = result_year
+            #print '%d: %d' % (int(index+1) % weeks_period, result_count)
+            # Check if the current period should end (i.e. there are 3 months in a quarter of a year).
+            if int(index+1) % weeks_period == 0:
+                #print period
+                # If yes, count the average score of the word and save it with the period ID.
+                period_avg = float(period['sum'] / weeks_period)
+                period_name = '%sq%s' % (period['year'], period['number'])
+                word_data.append((period_name, period_avg))
+                # Reset the period
+                period = {'year': None, 'sum': 0, 'number': period['number']+1}
+                # If the new year is on the plan, reset period number.
+                if period['number'] > 4:
+                    period['number'] = 1
+        # return data
+        return word_data
