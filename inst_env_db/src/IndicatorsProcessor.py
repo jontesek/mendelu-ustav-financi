@@ -72,16 +72,55 @@ class IndicatorsProcessor(object):
         # Save file
         self.out_workbook.save('output/all_data_edited.xlsx')
 
-        def write_cpi(self):
-            """
-            http://data.okfn.org/data/core/corruption-perceptions-index
-            format: CSV
-            :return:
-            """
-        def write_finopen(self):
-            """
-            http://web.pdx.edu/~ito/Chinn-Ito_website.htm
-            format: excel
-            :return:
-            """
+    def write_cpi(self):
+        """
+        http://data.okfn.org/data/core/corruption-perceptions-index
+        format: CSV
+        years: 1998-2014
+        :return:
+        """
+    def write_finopen(self):
+        """
+        http://web.pdx.edu/~ito/Chinn-Ito_website.htm
+        format: excel
+        years: 1970-2013
+        :return:
+        """
 
+    def write_econfree(self):
+        """
+        http://www.heritage.org/index/explore?view=by-region-country-year
+        format: csv
+        years: 1995-2016
+        :return:
+        """
+
+    def write_oecd(self):
+        """
+        http://stats.oecd.org/Index.aspx?QueryName=426
+        format: excel
+        years: 1995-2012
+        :return:
+        """
+
+    def write_global(self):
+        """
+        http://globalization.kof.ethz.ch/
+        format: excel
+        years: 1970-2012
+        :return:
+        """
+
+    def write_polcon(self):
+        """
+        https://mgmt.wharton.upenn.edu/faculty/heniszpolcon/polcondataset/
+        format: excel
+        years: 1960-2012
+        :return:
+        """
+
+    def write_shadow(self):
+        """
+        just PDFs not interested in this stuff
+        :return:
+        """
