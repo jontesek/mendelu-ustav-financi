@@ -2,6 +2,7 @@ from os import path
 import csv
 
 import openpyxl
+import xlrd
 
 
 class IndicatorsProcessor(object):
@@ -15,6 +16,7 @@ class IndicatorsProcessor(object):
             'econ_heritage': path.abspath(file_paths['input_dir']+'/'+'economic_freedom_heritage-sorted.xlsx'),
             'cpi_db': path.abspath(file_paths['input_dir']+'/'+'cpi_okfn.csv'),
             'fin_open': path.abspath(file_paths['input_dir']+'/'+'kaopen_2013.xls'),
+            'polcon': path.abspath(file_paths['input_dir']+'/'+'polcon2012.xls'),
         }
         # Open output file
         out_path = path.abspath(file_paths['output_file'])
@@ -142,7 +144,7 @@ class IndicatorsProcessor(object):
         """
         Corruption Perceptions Index
         """
-        # Prepared stuff
+        # Prepare stuff
         in_file = open(self.input_files['cpi_db'], 'rb')
         cpi_reader = csv.reader(in_file)
         out_sheet = self.out_workbook.get_sheet_by_name('data')
@@ -152,7 +154,6 @@ class IndicatorsProcessor(object):
         # Get the first (header) line.
         header_line = cpi_reader.next()
         first_year, last_year = int(header_line[1]), int(header_line[-1])
-
         # Read countries (lines) from file.
         for row in cpi_reader:
             cname_in = row[0]
@@ -180,40 +181,142 @@ class IndicatorsProcessor(object):
 
     def write_finopen(self):
         """
-        http://web.pdx.edu/~ito/Chinn-Ito_website.htm
-        format: excel
-        years: 1970-2013
+        Financial Openness
+        """
+        # Open input
+        in_wb = xlrd.open_workbook(self.input_files['fin_open'])
+        in_sheet = in_wb.sheet_by_index(0)
+        out_sheet = self.out_workbook.get_sheet_by_name('data')
+        # Prepare input and output rows
+        out_rows = out_sheet.rows[2:]
+        last_out_row_n = 0
+        # Get numeric column index for the first output item.
+        out_first_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['fin_open']) - 1
+        # Read all input rows.
+        for x in range(1, in_sheet.nrows):
+            row_in = in_sheet.row(x)
+            # Check if the column is not empty - the end.
+            if not row_in[0].value:
+                break
+            # Read values.
+            year_in = row_in[3].value
+            code_in = row_in[1].value.strip()
+            print('IN %d: %s') % (year_in, code_in)
+            # Get the score.
+            ko_value = row_in[4].value
+            # Write score to the correct output row.
+            for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
+                year_out = row_out[0].value
+                code_out = row_out[1].value.strip()
+                #print('%d OUT %d: %s') % (row_n, year_out, code_out)
+                if year_out == year_in and code_out == code_in:
+                    row_out[out_first_col_idx].value = ko_value
+                    last_out_row_n = row_n
+                    break
+                else:
+                    continue
+        # Save file
+        self.out_workbook.save('output/all_data_edited.xlsx')
+
+
+
+    def write_global(self):
+        """
+        KOF globalization index
+        Globalization Index, Economic Globalization, Social Globalization, Political Globalization
+        """
+        indices = ['index', 'economic', 'social', 'political']
+        for i_n, i_name in enumerate(indices):
+            # Prepare stuff
+            in_file = open(path.abspath(self.file_paths['input_dir']+'/global_'+i_name+'.csv'), 'rb')
+            csv_reader = csv.reader(in_file)
+            out_sheet = self.out_workbook.get_sheet_by_name('data')
+            out_rows = out_sheet.rows[2:]
+            last_out_row_n = 0
+            out_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['global']) - 1 + i_n
+            # Get the first (header) line.
+            header_line = csv_reader.next()
+            first_year = int(header_line[2])
+            # Read countries (lines) from file.
+            for row in csv_reader:
+                ccode_in = row[0]
+                print('IN %s') % ccode_in
+                # Save yearly values (1970-2012).
+                yearly_values = [float(row[x]) if row[x] != '.' else '' for x in range(2, len(header_line))]
+                # Find the first position of the country in the out workbook.
+                for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
+                    year_out = row_out[0].value
+                    ccode_out = row_out[1].value.strip()
+                    #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
+                    if year_out == first_year and ccode_out == ccode_in:
+                        last_out_row_n = row_n
+                        # Write values for all subsequent years.
+                        for y_value in yearly_values:
+                            row_out[out_col_idx].value = y_value
+                            last_out_row_n += 1
+                            row_out = out_rows[last_out_row_n]
+                        last_out_row_n = 0
+                        break
+                    else:
+                        continue
+            # Save file
+            self.out_workbook.save('output/all_data_edited.xlsx')
+
+
+
+    def write_polcon(self):
+        """
+        Political Constrains Index (III and V)
+        """
+        # Open input
+        in_wb = xlrd.open_workbook(self.input_files['polcon'])
+        in_sheet = in_wb.sheet_by_index(0)
+        out_sheet = self.out_workbook.get_sheet_by_name('data')
+        # Prepare input and output rows
+        out_rows = out_sheet.rows[2:]
+        last_out_row_n = 0
+        # Get numeric column index for the first output item.
+        out_first_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['polcon']) - 1
+        # Read all input rows.
+        for x in range(1, in_sheet.nrows):
+            row_in = in_sheet.row(x)
+            # Check if the column is not empty - the end.
+            if not row_in[0].value:
+                break
+            # Read values.
+            year_in = row_in[6].value
+            code_in = row_in[5].value.strip()
+            print('IN %d: %s') % (year_in, code_in)
+            # Get the score.
+            iii_value = row_in[7].value
+            v_value = row_in[8].value
+            # Write score to the correct output row.
+            for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
+                year_out = row_out[0].value
+                code_out = row_out[1].value.strip()
+                #print('%d OUT %d: %s') % (row_n, year_out, code_out)
+                if year_out == year_in and code_out == code_in:
+                    row_out[out_first_col_idx].value = iii_value
+                    row_out[out_first_col_idx + 1].value = v_value
+                    last_out_row_n = row_n
+                    break
+                else:
+                    continue
+        # Save file
+        self.out_workbook.save('output/all_data_edited.xlsx')
+
+
+
+    def write_shadow(self):
+        """
+        just PDFs not interested in this stuff
         :return:
         """
-
-
 
     def write_oecd(self):
         """
         http://stats.oecd.org/Index.aspx?QueryName=426
         format: excel
         years: 1995-2012
-        :return:
-        """
-
-    def write_global(self):
-        """
-        http://globalization.kof.ethz.ch/
-        format: excel
-        years: 1970-2012
-        :return:
-        """
-
-    def write_polcon(self):
-        """
-        https://mgmt.wharton.upenn.edu/faculty/heniszpolcon/polcondataset/
-        format: excel
-        years: 1960-2012
-        :return:
-        """
-
-    def write_shadow(self):
-        """
-        just PDFs not interested in this stuff
         :return:
         """
