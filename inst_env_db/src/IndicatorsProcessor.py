@@ -17,14 +17,15 @@ class IndicatorsProcessor(object):
             'cpi_db': path.abspath(file_paths['input_dir']+'/'+'cpi_okfn.csv'),
             'fin_open': path.abspath(file_paths['input_dir']+'/'+'kaopen_2013.xls'),
             'polcon': path.abspath(file_paths['input_dir']+'/'+'polcon2012.xls'),
+            'shadow': path.abspath(file_paths['input_dir']+'/'+'shadow_eco_knoema.xlsx'),
         }
         # Open output file
         out_path = path.abspath(file_paths['output_file'])
         self.out_workbook = openpyxl.load_workbook(filename=out_path)
         # Set source start positions (columns)
         self.source_pos = {
-            'cpi': 'D', 'fin_open': 'E', 'global': 'F', 'polcon': 'J', 'shadow': 'L', 'ulc': 'M',
-            'econ_freedom': 'N', 'econ_heritage': 'Q', 'do_biz': 'AB'
+            'cpi': 'E', 'fin_open': 'F', 'global': 'G', 'polcon': 'K', 'shadow': 'M', 'ulc': 'N',
+            'econ_freedom': 'O', 'econ_heritage': 'R', 'do_biz': 'AC'
         }
 
 
@@ -35,10 +36,11 @@ class IndicatorsProcessor(object):
         # Get country codes (and names) from out workbook.
         countries_ws = self.out_workbook.get_sheet_by_name('countries')
         countries_data = []
-        for row in countries_ws.iter_rows('A2:B237'):
+        for row in countries_ws.iter_rows('B2:D250'):
             name = row[0].value.strip()
-            code = row[1].value.strip()
-            countries_data.append([code, name])
+            code2 = row[1].value.strip()
+            code3 = row[2].value.strip()
+            countries_data.append([code3, name, code2])
         # Write data
         data_ws = self.out_workbook.get_sheet_by_name('data')
         write_row_n = 3
@@ -46,7 +48,8 @@ class IndicatorsProcessor(object):
             for year in range(from_year, to_year+1):
                 data_ws.cell(row=write_row_n, column=1).value = year
                 data_ws.cell(row=write_row_n, column=2).value = country[0]
-                data_ws.cell(row=write_row_n, column=3).value = country[1]
+                data_ws.cell(row=write_row_n, column=3).value = country[2]
+                data_ws.cell(row=write_row_n, column=4).value = country[1]
                 write_row_n += 1
         # Save file
         self.out_workbook.save(self.file_paths['output_file'])
@@ -270,7 +273,7 @@ class IndicatorsProcessor(object):
         """
         # Open input
         in_wb = xlrd.open_workbook(self.input_files['polcon'])
-        in_sheet = in_wb.sheet_by_index(0)
+        in_sheet = in_wb.sheet_by_index(1)
         out_sheet = self.out_workbook.get_sheet_by_name('data')
         # Prepare input and output rows
         out_rows = out_sheet.rows[2:]
@@ -285,17 +288,17 @@ class IndicatorsProcessor(object):
                 break
             # Read values.
             year_in = row_in[6].value
-            code_in = row_in[5].value.strip()
-            print('IN %d: %s') % (year_in, code_in)
+            cname_in = row_in[2].value.strip().lower()
+            print('IN %d: %s') % (year_in, cname_in)
             # Get the score.
             iii_value = row_in[7].value
             v_value = row_in[8].value
             # Write score to the correct output row.
             for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
                 year_out = row_out[0].value
-                code_out = row_out[1].value.strip()
-                #print('%d OUT %d: %s') % (row_n, year_out, code_out)
-                if year_out == year_in and code_out == code_in:
+                cname_out = row_out[3].value.strip().lower()
+                #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
+                if year_out == year_in and cname_out == cname_in:
                     row_out[out_first_col_idx].value = iii_value
                     row_out[out_first_col_idx + 1].value = v_value
                     last_out_row_n = row_n
@@ -309,9 +312,51 @@ class IndicatorsProcessor(object):
 
     def write_shadow(self):
         """
-        just PDFs not interested in this stuff
-        :return:
+        Shadow Economy Size: Size as Percentage of Official GDP
         """
+        # Open input
+        in_wb = openpyxl.load_workbook(self.input_files['shadow'])
+        in_sheet = in_wb.active
+        out_sheet = self.out_workbook.get_sheet_by_name('data')
+        # Prepare input and output rows
+        in_rows = in_sheet.rows[1:]
+        out_rows = out_sheet.rows[2:]
+        last_out_row_n = 0
+        # Get the first (header) line.
+        header_line = in_sheet.rows[0]
+        first_year = int(header_line[8].value)
+        # Get numeric column index for the output item.
+        out_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['shadow']) - 1
+        # Read all input rows.
+        for row_in in in_rows:
+            # Check if the column is not empty - the end.
+            if not row_in[0].value:
+                break
+            # Read values.
+            ccode_in = row_in[2].value.strip()
+            print('IN %s') % ccode_in
+            # Save values for all years.
+            yearly_values = [float(row_in[x].value) if row_in[x].value != '' else '' for x in range(8, len(header_line))]
+            # Write values to the correct output row.
+            for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
+                year_out = row_out[0].value
+                cname_out = row_out[2].value.strip()
+                #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
+                if year_out == first_year and cname_out == ccode_in:
+                    last_out_row_n = row_n
+                    # Write values for all subsequent years.
+                    for y_value in yearly_values:
+                        row_out[out_col_idx].value = y_value
+                        last_out_row_n += 1
+                        row_out = out_rows[last_out_row_n]
+                    last_out_row_n = 0
+                    break
+                else:
+                    continue
+        # Save file
+        self.out_workbook.save('output/all_data_edited.xlsx')
+
+
 
     def write_oecd(self):
         """
