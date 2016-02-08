@@ -358,10 +358,76 @@ class IndicatorsProcessor(object):
 
 
 
-    def write_oecd(self):
+    def write_dobiz(self):
         """
-        http://stats.oecd.org/Index.aspx?QueryName=426
-        format: excel
-        years: 1995-2012
-        :return:
+        Doing Business database
         """
+        # Open input
+        in_wb = xlrd.open_workbook(self.input_files['doing_business'])
+        in_sheet = in_wb.sheet_by_index(0)
+        out_sheet = self.out_workbook.get_sheet_by_name('data')
+        # Prepare input and output rows
+        out_rows = out_sheet.rows[2:]
+        last_out_row_n = 0
+        # Get the first (header) line.
+        header_line = in_sheet.row(0)
+        first_year = int(header_line[4].value[0:4])
+        # Get numeric column index for the first output item.
+        out_first_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['do_biz']) - 1
+        # Read all input rows.
+        for x in range(1, in_sheet.nrows):
+            row_in = in_sheet.row(x)
+            # Check if the column is not empty - the end.
+            if not row_in[0].value:
+                break
+            # Read country code.
+            ccode_in = row_in[1].value.strip()
+            print('IN %s') % ccode_in
+            if x == 1:
+                current_code = ccode_in
+                indicators_yearly_data = []
+            # Save values for all years.
+            yearly_values = [float(row_in[x].value) if row_in[x].value != '..' else '' for x in range(4, len(header_line))]
+            # Check if I still read code for the same country.
+            if current_code == ccode_in:
+                # YES - Add yearly values to the list and continue reading.
+                indicators_yearly_data.append(yearly_values)
+                current_code == ccode_in
+                continue
+            else:
+                # NO
+                # Process yearly data into row data: one year and values for all indicators.
+                country_row_data = {}
+                available_years = [int(x.value[0:4]) for x in header_line[4:]]
+                for year in available_years:
+                    country_row_data[year] = []
+                for indicator_data in indicators_yearly_data:
+                    for i_year, year in enumerate(available_years):
+                        country_row_data[year].append(indicator_data[i_year])
+                # Write data
+                for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
+                    year_out = row_out[0].value
+                    ccode_out = row_out[1].value.strip()
+                    #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
+                    # Find the first occurence of the country in the workbook.
+                    if year_out == first_year and ccode_out == current_code:
+                        last_out_row_n = row_n
+                        # Write all data year by year.
+                        for year, y_data in country_row_data.items():
+                            # For current year, write values for all indicators.
+                            for i_s, i_value in enumerate(y_data, out_first_col_idx):
+                                row_out[i_s].value = i_value
+                            # Go to the next line (year)
+                            last_out_row_n += 1
+                            row_out = out_rows[last_out_row_n]
+                        # reset stuff
+                        last_out_row_n = 0
+                        break
+                    else:
+                        continue
+                # Reset data
+                current_code = ccode_in
+                indicators_yearly_data = [yearly_values]
+
+        # Save file
+        self.out_workbook.save('output/all_data_edited.xlsx')
