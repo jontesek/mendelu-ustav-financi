@@ -18,6 +18,7 @@ class IndicatorsProcessor(object):
             'fin_open': path.abspath(file_paths['input_dir']+'/'+'kaopen_2013.xls'),
             'polcon': path.abspath(file_paths['input_dir']+'/'+'polcon2012.xls'),
             'shadow': path.abspath(file_paths['input_dir']+'/'+'shadow_eco_knoema.xlsx'),
+            'ulc': path.abspath(file_paths['input_dir']+'/'+'ulc_e2003.xls'),
         }
         # Open output file
         out_path = path.abspath(file_paths['output_file'])
@@ -429,5 +430,54 @@ class IndicatorsProcessor(object):
                 current_code = ccode_in
                 indicators_yearly_data = [yearly_values]
 
+        # Save file
+        self.out_workbook.save('output/all_data_edited.xlsx')
+
+    def write_ulc(self):
+        """
+        Unit Labour Costs (OECD)
+        """
+        # Open input
+        in_wb = xlrd.open_workbook(self.input_files['ulc'])
+        in_sheet = in_wb.sheet_by_index(0)
+        out_sheet = self.out_workbook.get_sheet_by_name('data')
+        # Prepare input and output rows
+        out_rows = out_sheet.rows[2:]
+        last_out_row_n = 0
+        # Get the first (header) line.
+        header_line = in_sheet.row(6)
+        first_year = int(header_line[3].value)
+        # Get numeric column index for the first output item.
+        out_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['ulc']) - 1
+        # Read all input rows.
+        for x in range(8, in_sheet.nrows):
+            row_in = in_sheet.row(x)
+            # The end.
+            if x == 42:
+                break
+            # Special reading for rows 40 and 41.
+            if x == 40 or x == 41:
+                cname_in = row_in[1].value.strip()
+            else:
+                cname_in = row_in[0].value.strip()
+            print('IN %d: %s') % (x, cname_in)
+            # Save values for all years.
+            yearly_values = [float(row_in[x].value) if row_in[x].value != '..' else '' for x in range(3, len(header_line))]
+            # Write values to the correct output row.
+            for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
+                year_out = row_out[0].value
+                cname_out = row_out[3].value.strip()
+                #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
+                if year_out == first_year and cname_out == cname_in:
+                    last_out_row_n = row_n
+                    # Write values for all subsequent years.
+                    for y_value in yearly_values:
+                        row_out[out_col_idx].value = y_value
+                        last_out_row_n += 1
+                        row_out = out_rows[last_out_row_n]
+                    last_out_row_n = 0
+                    break
+                else:
+                    continue
         # Save file
         self.out_workbook.save('output/all_data_edited.xlsx')
