@@ -13,10 +13,10 @@ class IndicatorsProcessor(object):
         self.input_files = {
             'econ_freedom': path.abspath(file_paths['input_dir']+'/'+'economic-freedom-of-the-world-2015-dataset.xlsx'),
             'doing_business': path.abspath(file_paths['input_dir']+'/'+'Data_Extract_From_Doing_Business.xlsx'),
-            'econ_heritage': path.abspath(file_paths['input_dir']+'/'+'economic_freedom_heritage-sorted.xlsx'),
-            'cpi_db': path.abspath(file_paths['input_dir']+'/'+'cpi_okfn.csv'),
+            'econ_heritage': path.abspath(file_paths['input_dir']+'/'+'economic_freedom_heritage-ok.xlsx'),
+            'cpi_db': path.abspath(file_paths['input_dir']+'/'+'cpi_okfn-ok.csv'),
             'fin_open': path.abspath(file_paths['input_dir']+'/'+'kaopen_2013.xls'),
-            'polcon': path.abspath(file_paths['input_dir']+'/'+'polcon2012_ok.xls'),
+            'polcon': path.abspath(file_paths['input_dir']+'/'+'polcon2012-ok.xls'),
             'shadow': path.abspath(file_paths['input_dir']+'/'+'shadow_eco_knoema.xlsx'),
             'ulc': path.abspath(file_paths['input_dir']+'/'+'ulc_e2003.xls'),
         }
