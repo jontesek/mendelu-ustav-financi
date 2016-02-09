@@ -16,7 +16,7 @@ class IndicatorsProcessor(object):
             'econ_heritage': path.abspath(file_paths['input_dir']+'/'+'economic_freedom_heritage-sorted.xlsx'),
             'cpi_db': path.abspath(file_paths['input_dir']+'/'+'cpi_okfn.csv'),
             'fin_open': path.abspath(file_paths['input_dir']+'/'+'kaopen_2013.xls'),
-            'polcon': path.abspath(file_paths['input_dir']+'/'+'polcon2012.xls'),
+            'polcon': path.abspath(file_paths['input_dir']+'/'+'polcon2012_ok.xls'),
             'shadow': path.abspath(file_paths['input_dir']+'/'+'shadow_eco_knoema.xlsx'),
             'ulc': path.abspath(file_paths['input_dir']+'/'+'ulc_e2003.xls'),
         }
