@@ -20,15 +20,14 @@ class IndicatorsProcessor(object):
             'shadow': path.abspath(file_paths['input_dir']+'/'+'shadow_eco_knoema.xlsx'),
             'ulc': path.abspath(file_paths['input_dir']+'/'+'ulc_e2003.xls'),
         }
-        # Open output file
-        out_path = path.abspath(file_paths['output_file'])
+        # Open input file
+        out_path = path.abspath(file_paths['output_dir']+'/'+'data_input.xlsx')
         self.out_workbook = openpyxl.load_workbook(filename=out_path)
         # Set source start positions (columns)
         self.source_pos = {
             'cpi': 'E', 'fin_open': 'F', 'global': 'G', 'polcon': 'K', 'shadow': 'M', 'ulc': 'N',
             'econ_freedom': 'O', 'econ_heritage': 'R', 'do_biz': 'AC'
         }
-
 
     def write_years_and_countries(self, from_year, to_year):
         """
@@ -37,7 +36,7 @@ class IndicatorsProcessor(object):
         # Get country codes (and names) from out workbook.
         countries_ws = self.out_workbook.get_sheet_by_name('countries')
         countries_data = []
-        for row in countries_ws.iter_rows('B2:D250'):
+        for row in countries_ws.iter_rows('B2:D252'):
             name = row[0].value.strip()
             code2 = row[1].value.strip()
             code3 = row[2].value.strip()
@@ -53,7 +52,10 @@ class IndicatorsProcessor(object):
                 data_ws.cell(row=write_row_n, column=4).value = country[1]
                 write_row_n += 1
         # Save file
-        self.out_workbook.save(self.file_paths['output_file'])
+        self.out_workbook.save(self.file_paths['output_dir']+'/'+'data_input.xlsx')
+
+    def write_workbook_to_file(self):
+        self.out_workbook.save(self.file_paths['output_dir']+'/'+'data_output.xlsx')
 
     def write_econ_freedom(self):
         """
@@ -90,7 +92,7 @@ class IndicatorsProcessor(object):
             for i, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
                 year_out = row_out[0].value
                 code_out = row_out[1].value.strip()
-                print('%d OUT %d: %s') % (i, year_out, code_out)
+                #print('%d OUT %d: %s') % (i, year_out, code_out)
                 if year_out == year_in and code_out == code_in:
                     row_out[out_first_col_idx - 1].value = br_value
                     row_out[out_first_col_idx].value = freetr_value
@@ -99,8 +101,7 @@ class IndicatorsProcessor(object):
                     break
                 else:
                     continue
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
+        # end
 
     def write_econ_heritage(self):
         """
@@ -140,9 +141,7 @@ class IndicatorsProcessor(object):
                     break
                 else:
                     continue
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
-
+        # end
 
     def write_cpi(self):
         """
@@ -179,9 +178,7 @@ class IndicatorsProcessor(object):
                     break
                 else:
                     continue
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
-
+        # end
 
     def write_finopen(self):
         """
@@ -219,10 +216,7 @@ class IndicatorsProcessor(object):
                     break
                 else:
                     continue
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
-
-
+        # end
 
     def write_global(self):
         """
@@ -263,10 +257,7 @@ class IndicatorsProcessor(object):
                         break
                     else:
                         continue
-            # Save file
-            self.out_workbook.save('output/all_data_edited.xlsx')
-
-
+            # end
 
     def write_polcon(self):
         """
@@ -306,10 +297,7 @@ class IndicatorsProcessor(object):
                     break
                 else:
                     continue
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
-
-
+        # end
 
     def write_shadow(self):
         """
@@ -354,10 +342,7 @@ class IndicatorsProcessor(object):
                     break
                 else:
                     continue
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
-
-
+        # end
 
     def write_dobiz(self):
         """
@@ -429,9 +414,7 @@ class IndicatorsProcessor(object):
                 # Reset data
                 current_code = ccode_in
                 indicators_yearly_data = [yearly_values]
-
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
+        # end
 
     def write_ulc(self):
         """
@@ -479,5 +462,4 @@ class IndicatorsProcessor(object):
                     break
                 else:
                     continue
-        # Save file
-        self.out_workbook.save('output/all_data_edited.xlsx')
+        # end
