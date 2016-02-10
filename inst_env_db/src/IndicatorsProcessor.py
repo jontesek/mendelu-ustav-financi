@@ -78,7 +78,7 @@ class IndicatorsProcessor(object):
             if not row_in[1].value:
                 break
             # Read values.
-            year_in = row_in[1].value
+            year_in = int(row_in[1].value)
             code_in = row_in[2].value.strip()
             print('IN %d: %s') % (year_in, code_in)
             # Get scores
@@ -89,15 +89,15 @@ class IndicatorsProcessor(object):
             topmar_idx = openpyxl.utils.column_index_from_string('P')
             topmar_value = row_in[topmar_idx - 1].value
             # Write scores to the correct output row.
-            for i, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                year_out = row_out[0].value
+            for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
+                year_out = int(row_out[0].value)
                 code_out = row_out[1].value.strip()
                 #print('%d OUT %d: %s') % (i, year_out, code_out)
                 if year_out == year_in and code_out == code_in:
                     row_out[out_first_col_idx - 1].value = br_value
                     row_out[out_first_col_idx].value = freetr_value
                     row_out[out_first_col_idx + 1].value = topmar_value
-                    last_out_row_n = i
+                    last_out_row_n = 0
                     break
                 else:
                     continue
@@ -117,27 +117,27 @@ class IndicatorsProcessor(object):
         out_rows = out_sheet.rows[2:]
         last_out_row_n = 0
         # Get numeric column index for the first output item.
-        out_first_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['econ_heritage'])
+        out_first_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['econ_heritage']) - 1
         # Read all input rows.
         for row_in in in_rows:
             # Check if the column is not empty - the end.
             if not row_in[0].value:
                 break
             # Read values.
-            year_in = row_in[1].value
-            cname_in = row_in[0].value.strip()
-            #print('IN %d: %s') % (year_in, cname_in)
+            year_in = int(row_in[1].value)
+            cname_in = row_in[0].value.strip().lower()
+            print('IN %d: %s') % (year_in, cname_in)
             # Get scores
-            out_scores = [row_in[x].value if row_in[x].value != 'N/A' else '' for x in range(2, 13)]
+            out_scores = [float(row_in[x].value) if row_in[x].value != 'N/A' else '' for x in range(2, 13)]
             # Write scores to the correct output row.
             for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                year_out = row_out[0].value
-                cname_out = row_out[2].value.strip()
+                year_out = int(row_out[0].value)
+                cname_out = row_out[3].value.strip().lower()
                 #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
                 if year_out == year_in and cname_out == cname_in:
                     for i_s, score in enumerate(out_scores, out_first_col_idx):
                         row_out[i_s].value = score
-                    last_out_row_n = row_n
+                    last_out_row_n = 0
                     break
                 else:
                     continue
@@ -159,14 +159,14 @@ class IndicatorsProcessor(object):
         first_year, last_year = int(header_line[1]), int(header_line[-1])
         # Read countries (lines) from file.
         for row in cpi_reader:
-            cname_in = row[0]
+            cname_in = row[0].strip().lower()
             print('IN %s') % cname_in
             # Save yearly values (1998-2014).
             yearly_values = [float(row[x]) if row[x] != 'NA' else '' for x in range(1, len(header_line))]
             # Find the first position of the country in the out workbook.
             for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                year_out = row_out[0].value
-                cname_out = row_out[2].value.strip()
+                year_out = int(row_out[0].value)
+                cname_out = row_out[3].value.strip().lower()
                 #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
                 if year_out == first_year and cname_out == cname_in:
                     last_out_row_n = row_n
@@ -175,6 +175,8 @@ class IndicatorsProcessor(object):
                         row_out[out_first_col_idx].value = y_value
                         last_out_row_n += 1
                         row_out = out_rows[last_out_row_n]
+                    # reset - for sure
+                    last_out_row_n = 0
                     break
                 else:
                     continue
@@ -196,23 +198,20 @@ class IndicatorsProcessor(object):
         # Read all input rows.
         for x in range(1, in_sheet.nrows):
             row_in = in_sheet.row(x)
-            # Check if the column is not empty - the end.
-            if not row_in[0].value:
-                break
             # Read values.
-            year_in = row_in[3].value
+            year_in = int(row_in[3].value)
             code_in = row_in[1].value.strip()
             print('IN %d: %s') % (year_in, code_in)
             # Get the score.
             ko_value = row_in[4].value
             # Write score to the correct output row.
             for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                year_out = row_out[0].value
+                year_out = int(row_out[0].value)
                 code_out = row_out[1].value.strip()
                 #print('%d OUT %d: %s') % (row_n, year_out, code_out)
                 if year_out == year_in and code_out == code_in:
                     row_out[out_first_col_idx].value = ko_value
-                    last_out_row_n = row_n
+                    last_out_row_n = 0  # Or set to row_n, if the speed is important (1/4 time).
                     break
                 else:
                     continue
@@ -237,13 +236,13 @@ class IndicatorsProcessor(object):
             first_year = int(header_line[2])
             # Read countries (lines) from file.
             for row in csv_reader:
-                ccode_in = row[0]
+                ccode_in = row[0].strip()
                 print('IN %s') % ccode_in
                 # Save yearly values (1970-2012).
                 yearly_values = [float(row[x]) if row[x] != '.' else '' for x in range(2, len(header_line))]
                 # Find the first position of the country in the out workbook.
                 for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                    year_out = row_out[0].value
+                    year_out = int(row_out[0].value)
                     ccode_out = row_out[1].value.strip()
                     #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
                     if year_out == first_year and ccode_out == ccode_in:
@@ -279,7 +278,7 @@ class IndicatorsProcessor(object):
             if not row_in[0].value:
                 break
             # Read values.
-            year_in = row_in[6].value
+            year_in = int(row_in[6].value)
             cname_in = row_in[2].value.strip().lower()
             print('IN %d: %s') % (year_in, cname_in)
             # Get the score.
@@ -287,13 +286,13 @@ class IndicatorsProcessor(object):
             v_value = row_in[8].value
             # Write score to the correct output row.
             for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                year_out = row_out[0].value
+                year_out = int(row_out[0].value)
                 cname_out = row_out[3].value.strip().lower()
                 #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
                 if year_out == year_in and cname_out == cname_in:
                     row_out[out_first_col_idx].value = iii_value
                     row_out[out_first_col_idx + 1].value = v_value
-                    last_out_row_n = row_n
+                    last_out_row_n = 0
                     break
                 else:
                     continue
@@ -328,10 +327,10 @@ class IndicatorsProcessor(object):
             yearly_values = [float(row_in[x].value) if row_in[x].value != '' else '' for x in range(8, len(header_line))]
             # Write values to the correct output row.
             for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                year_out = row_out[0].value
-                cname_out = row_out[2].value.strip()
+                year_out = int(row_out[0].value)
+                ccode_out = row_out[2].value.strip()
                 #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
-                if year_out == first_year and cname_out == ccode_in:
+                if year_out == first_year and ccode_out == ccode_in:
                     last_out_row_n = row_n
                     # Write values for all subsequent years.
                     for y_value in yearly_values:
@@ -347,6 +346,7 @@ class IndicatorsProcessor(object):
     def write_dobiz(self):
         """
         Doing Business database
+        50+ indicators
         """
         # Open input
         in_wb = xlrd.open_workbook(self.input_files['doing_business'])
@@ -361,19 +361,19 @@ class IndicatorsProcessor(object):
         # Get numeric column index for the first output item.
         out_first_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['do_biz']) - 1
         # Read all input rows.
-        for x in range(1, in_sheet.nrows):
-            row_in = in_sheet.row(x)
-            # Check if the column is not empty - the end.
-            if not row_in[0].value:
-                break
+        for r_i in range(1, in_sheet.nrows):
+            # Get current row.
+            row_in = in_sheet.row(r_i)
             # Read country code.
             ccode_in = row_in[1].value.strip()
             print('IN %s') % ccode_in
-            if x == 1:
+            if r_i == 1:
                 current_code = ccode_in
                 indicators_yearly_data = []
             # Save values for all years.
-            yearly_values = [float(row_in[x].value) if row_in[x].value != '..' else '' for x in range(4, len(header_line))]
+            yearly_values = [float(row_in[x].value)
+                             if (row_in[x].value != '..' and row_in[x].value != '') else ''
+                             for x in range(4, len(header_line))]
             # Check if I still read code for the same country.
             if current_code == ccode_in:
                 # YES - Add yearly values to the list and continue reading.
@@ -392,7 +392,7 @@ class IndicatorsProcessor(object):
                         country_row_data[year].append(indicator_data[i_year])
                 # Write data
                 for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                    year_out = row_out[0].value
+                    year_out = int(row_out[0].value)
                     ccode_out = row_out[1].value.strip()
                     #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
                     # Find the first occurence of the country in the workbook.
@@ -414,6 +414,9 @@ class IndicatorsProcessor(object):
                 # Reset data
                 current_code = ccode_in
                 indicators_yearly_data = [yearly_values]
+                # Check if we should end.
+                if r_i == 12509:
+                    break
         # end
 
     def write_ulc(self):
@@ -433,22 +436,22 @@ class IndicatorsProcessor(object):
         # Get numeric column index for the first output item.
         out_col_idx = openpyxl.utils.column_index_from_string(self.source_pos['ulc']) - 1
         # Read all input rows.
-        for x in range(8, in_sheet.nrows):
-            row_in = in_sheet.row(x)
+        for i_r in range(8, in_sheet.nrows):
+            row_in = in_sheet.row(i_r)
             # The end.
-            if x == 42:
+            if i_r == 42:
                 break
             # Special reading for rows 40 and 41.
-            if x == 40 or x == 41:
+            if i_r == 40 or i_r == 41:
                 cname_in = row_in[1].value.strip()
             else:
                 cname_in = row_in[0].value.strip()
-            print('IN %d: %s') % (x, cname_in)
+            print('IN %d: %s') % (i_r, cname_in)
             # Save values for all years.
             yearly_values = [float(row_in[x].value) if row_in[x].value != '..' else '' for x in range(3, len(header_line))]
             # Write values to the correct output row.
             for row_n, row_out in enumerate(out_rows[last_out_row_n:], start=last_out_row_n):
-                year_out = row_out[0].value
+                year_out = int(row_out[0].value)
                 cname_out = row_out[3].value.strip()
                 #print('%d OUT %d: %s') % (row_n, year_out, cname_out)
                 if year_out == first_year and cname_out == cname_in:
