@@ -7,6 +7,7 @@ from src.GoogleDataGetter import GoogleDataGetter
 # Define file paths.
 file_paths = {
     'input_file': 'input/google_data_manual.xlsx',
+    'country_codes_file': 'input/country_codes.csv',
     'output_dir': 'input',
     'gdata_dir': 'g_data',
 }
@@ -25,5 +26,5 @@ gdg = GoogleDataGetter(file_paths, g_credentials)
 ####
 # EXECUTION PART
 ####
-#gdg.process_country('CZ')
+#gdg.process_country('PL')
 gdg.process_all_countries()
