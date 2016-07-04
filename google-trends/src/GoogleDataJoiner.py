@@ -45,12 +45,17 @@ class GoogleDataJoiner(object):
         # Get term ID
         term_id = file_name.split('_')[1].replace('.csv', '')
         # Get search term
-        term_text = gfile.readline().split(':')[1].strip()
+        term_values = []
+        try:
+            term_text = gfile.readline().split(':')[1].strip()
+        except IndexError, e:
+            print("%s: IndexError" % term_id)
+            term_values.append('Index_Error')
+            term_text = 'x_unknown'
         # Skip 4 lines
         for i in range(0, 4):
             gfile.readline()
         # Save all data until empty line.
-        term_values = []
         for line in gfile:
             if not line.strip():
                 break
@@ -73,3 +78,4 @@ class GoogleDataJoiner(object):
         # If yes, write them all!
         for row_idx, t_value in enumerate(term_values, 3):
             country_sheet.cell(column=term_id, row=row_idx).value = t_value
+        # OK

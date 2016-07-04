@@ -6,9 +6,8 @@ from src.GoogleDataGetter import GoogleDataGetter
 
 # Define file paths.
 file_paths = {
-    'input_file': 'input/google_data_manual.xlsx',
+    'input_file': 'input/google_data_manual_edited.xlsx',
     'country_codes_file': 'input/country_codes.csv',
-    'output_dir': 'input',
     'gdata_dir': 'g_data',
 }
 

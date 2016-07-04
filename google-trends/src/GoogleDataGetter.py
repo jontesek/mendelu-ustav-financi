@@ -46,8 +46,10 @@ class GoogleDataGetter(object):
             os.makedirs(csv_dir_path)
         # Get all terms.
         for (term_id, term_text) in terms_list.items():
+            # Prepare search term text.
+            search_text = term_text.encode('utf8').strip()
             # Make request. URL example: https://www.google.com/trends/explore#q=koruna&geo=CZ&cmpt=q&tz=Etc%2FGMT-2
-            self.g_connector.request_report(term_text.encode('utf8'), geo=country_code, tz="Etc/GMT-2")
+            self.g_connector.request_report(search_text, geo=country_code, tz="Etc/GMT-2")
             # Wait a random amount of seconds between requests to avoid bot detection.
             time.sleep(randint(5, 10))
             # Download file.
@@ -67,7 +69,7 @@ class GoogleDataGetter(object):
 
     @staticmethod
     def get_country_codes(codes_filepath):
-        c_codes = {}
+        c_codes = OrderedDict()
         with open(codes_filepath) as code_file:
             code_file.readline()    # skip first line
             for line in code_file:

@@ -44,7 +44,7 @@ class GoogleDataProcessor(object):
 
     def process_all_countries(self):
         for country_code in self.in_workbook.get_sheet_names():
-            print('PROCESSING %s' % country_code)
+            print('====PROCESSING %s====' % country_code)
             self.process_country(country_code)
             if country_code == 'CZ':
                 pass#self.process_country(country_code)
@@ -79,14 +79,14 @@ class GoogleDataProcessor(object):
         word_string = column[1].value
         # Check if the first item is empty - data not present.
         if not column[2].value:
-            print('===empty===')
+            #print('===empty===')
             return [word_id, word_string, False]
         # Check if the values have monthly or weekly frequency.
         if self.reg_week.match(column[2].value):
-            print('===week===')
+            #print('===week===')
             word_data = self._process_weekly_values(3, column[2:])
         else:
-            print('===month===')
+            #print('===month===')
             word_data = self._process_monthly_values(3, column[2:])
         # result
         # print word_data
@@ -109,7 +109,7 @@ class GoogleDataProcessor(object):
             # If yes, write periods data.
             for row_idx, (period_name, avg_num) in enumerate(word_data):
                 # If it is the first processed column, write period name to the first column.
-                if col_idx == 1:
+                if col_idx == 0:
                     country_sheet.cell(column=1,row=row_idx+3).value = period_name
                 # Write period average
                 country_sheet.cell(column=col_num,row=row_idx+3).value = avg_num
